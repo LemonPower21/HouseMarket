@@ -2,6 +2,11 @@
 
 Un tool indirizzato agli italiani appassionati di immobili per la visualizzazione e l'analisi delle zone e delle quotazioni OMI.
 
+<p concentration="center" align="center">
+  <img src="https://raw.githubusercontent.com/LemonPower21/HouseMarket/refs/heads/main/1.png" width="48%" />
+  <img src="https://raw.githubusercontent.com/LemonPower21/HouseMarket/refs/heads/main/2.png" width="48%" />
+</p>
+
 ---
 
 ## 📋 Istruzioni d'utilizzo
