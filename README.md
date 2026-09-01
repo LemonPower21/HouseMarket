@@ -28,8 +28,8 @@ Estrai tutto il contenuto scaricato all'interno della stessa cartella di progett
 ```text
 HouseMarket/
 ├── HouseMarket.py
-├── Zone.csv          # File Zone estratto e rinominato
-├── Valori.csv        # File Valori estratto e rinominato
+├── Zone.csv          # File Zone estratto e rinominato in (Zone.csv)
+├── Valori.csv        # File Valori estratto e rinominato in (Valori.csv)
 └── *.kml             # I file KML dei perimetri di zona
 
 ```
