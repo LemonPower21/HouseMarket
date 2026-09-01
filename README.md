@@ -1,7 +1,3 @@
-Puoi usare questo unico blocco di testo grezzo da selezionare interamente senza formattazione Markdown:
-
----
-
 # HouseMarket 🏠
 
 Un tool indirizzato agli italiani appassionati di immobili per la visualizzazione e l'analisi delle zone e delle quotazioni OMI.
