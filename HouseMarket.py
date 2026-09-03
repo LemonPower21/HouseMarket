@@ -3,6 +3,14 @@ import os
 import sys
 import multiprocessing
 import webbrowser
+# --- DISABILITA CACHE CHROMIUM / QTWEBENGINE PER EVITARE L'ERRORE ACCESS DENIED ---
+os.environ["QTWEBENGINE_DISABLE_GPU"] = "1"  # OSTACOLA L'USO DI GPUCACHE BLOCCATA
+sys.argv.extend([
+    '--disable-gpu-shader-disk-cache',
+    '--disable-gpu-program-cache',
+    '--disk-cache-size=1'
+])
+
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QTimer
@@ -18,7 +26,7 @@ BOLD = "\033[1m"
 RESET = "\033[0m"
 
 class FinestraMappaKML(QMainWindow):
-    """Finestra GUI PyQt5 locale per la visualizzazione avanzata del file KML, ricerca indirizzi ed esportazione PDF."""
+    """Finestra GUI PyQt5 locale per la visualizzazione del file KML, ricerca indirizzi ed esportazione PDF."""
     def __init__(self, percorso_kml, nome_comune):
         super().__init__()
         self.nome_comune = nome_comune
@@ -254,7 +262,6 @@ def carica_dati_zone(file_zone):
     return comuni
 
 def calcola_medie_comuni(file_valori, dati_comuni):
-    """Calcola la media dei valori di compravendita e affitto (Min, Max e Medio Globale) per ogni comune."""
     medie_comuni = {}
     
     with open(file_valori, mode='r', encoding='utf-8-sig') as f:
@@ -343,16 +350,16 @@ def salva_su_txt(nome_comune, codice_comune, etichetta_zona, righe_dati, medie):
     
     with open(nome_file, mode='w', encoding='utf-8') as f:
         zona_testo = "TUTTE LE ZONE" if etichetta_zona == "TUTTE" else etichetta_zona
-        f.write("┌──────┬────────────────────────────────────────┬──────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┐\n")
-        f.write(f"│ VALORI DI MERCATO IMMOBILIARI   │  Comune: {nome_comune} ({codice_comune})  │  Zona: {zona_testo:<52}│\n")
-        f.write("├──────┼────────────────────────────────────────┼──────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤\n")
-        f.write(f"│ {'Zona':<4} │ {'Tipologia':<38} │ {'Stato':<12} │ {'Compr. Min (€/m²)':<17} │ {'Compr. Max (€/m²)':<17} │ {'Loc. Min (€/m²/m)':<17} │ {'Loc. Max (€/m²/m)':<17} │\n")
-        f.write("├──────┼────────────────────────────────────────┼──────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤\n")
+        f.write("┌──────────────┬──────────┬──────┬──────┬──────────┬────────┬─────────────┬─────────────┬──────────────┬─────────────┬────────────────────────────────────────┬──────────┬────────────┬────────────┬─────────────┬────────────┬────────────┬─────────────┐\n")
+        f.write(f"│ VALORI COMPLETI DI MERCATO IMMOBILIARI - Comune: {nome_comune} ({codice_comune}) - Zona: {zona_testo:<80}│\n")
+        f.write("├──────────────┼──────────┼──────┼──────┼──────────┼────────┬─────────────┬─────────────┬──────────────┬─────────────┬────────────────────────────────────────┬──────────┬────────────┬────────────┬─────────────┬────────────┬────────────┬─────────────┤\n")
+        f.write(f"│ {'Area Terr.':<12} │ {'Regione':<8} │ {'Prov':<4} │ {'Sez':<4} │ {'LinkZona':<8} │ {'Fascia':<6} │ {'Cod.Tip':<11} │ {'Sup.NL C.':<11} │ {'Sup.NL L.':<12} │ {'Zona':<11} │ {'Tipologia':<38} │ {'Stato':<8} │ {'C.Min':<10} │ {'C.Max':<10} │ {'Stato Prev':<11} │ {'L.Min':<10} │ {'L.Max':<10} │\n")
+        f.write("├──────────────┼──────────┼──────┼──────┼──────────┼────────┬─────────────┬─────────────┬──────────────┬─────────────┬────────────────────────────────────────┬──────────┬────────────┬────────────┬─────────────┬────────────┬────────────┬─────────────┤\n")
         
         for r in righe_dati:
-            f.write(f"│ {r['zona']:<4} │ {r['tipologia']:<38} │ {r['stato']:<12} │ {r['compr_min']:<17} │ {r['compr_max']:<17} │ {r['loc_min']:<17} │ {r['loc_max']:<17} │\n")
+            f.write(f"│ {r['area']:<12} │ {r['regione']:<8} │ {r['prov']:<4} │ {r['sez']:<4} │ {r['link_zona']:<8} │ {r['fascia']:<6} │ {r['cod_tip']:<11} │ {r['sup_nl_c']:<11} │ {r['sup_nl_l']:<12} │ {r['zona']:<11} │ {r['tipologia']:<38} │ {r['stato']:<8} │ {r['compr_min']:<10} │ {r['compr_max']:<10} │ {r['stato_prev']:<11} │ {r['loc_min']:<10} │ {r['loc_max']:<10} │\n")
             
-        f.write("└──────┴────────────────────────────────────────┴──────────────┴───────────────────┴───────────────────┴───────────────────┴───────────────────┘\n")
+        f.write("└──────────────┴──────────┴──────┴──────┴──────────┴────────┴─────────────┴─────────────┴──────────────┴─────────────┴────────────────────────────────────────┴──────────┴────────────┴────────────┴─────────────┴────────────┴────────────┴─────────────┘\n")
         
         if medie:
             f.write("\n=====================================================================================================================\n")
@@ -410,6 +417,14 @@ def mostra_dettagli_valori(file_valori, info_comune, codice_comune, zona_scelta)
             match_zona = mostra_tutto or (riga_zona.upper() == zona_scelta.upper())
 
             if (codice_comune in [riga_istat, riga_cat, riga_amm]) and match_zona:
+                area = row_clean.get('Area_territoriale', 'N/D')
+                regione = row_clean.get('Regione', 'N/D')
+                prov = row_clean.get('Prov', 'N/D')
+                sez = row_clean.get('Sez', '')
+                fascia = row_clean.get('Fascia', '')
+                link_zona = row_clean.get('LinkZona', '')
+                cod_tip = row_clean.get('Cod_Tip', '')
+                
                 tipologia = ""
                 for k, v in row_clean.items():
                     if k.lower().startswith("descr_tip"):
@@ -419,10 +434,13 @@ def mostra_dettagli_valori(file_valori, info_comune, codice_comune, zona_scelta)
                     tipologia = "N/D"
 
                 stato = row_clean.get('Stato', '')
+                stato_prev = row_clean.get('Stato_prev', '')
                 compr_min = row_clean.get('Compr_min', '')
                 compr_max = row_clean.get('Compr_max', '')
+                sup_nl_c = row_clean.get('Sup_NL_c', '')
                 loc_min = row_clean.get('Loc_min', '')
                 loc_max = row_clean.get('Loc_max', '')
+                sup_nl_l = row_clean.get('Sup_NL_loc', '')
 
                 c_min_val = pulisci_numero(compr_min)
                 c_max_val = pulisci_numero(compr_max)
@@ -435,13 +453,23 @@ def mostra_dettagli_valori(file_valori, info_comune, codice_comune, zona_scelta)
                 if l_max_val is not None: l_max_list.append(l_max_val)
 
                 righe_estratte.append({
+                    'area': area,
+                    'regione': regione,
+                    'prov': prov,
+                    'sez': sez,
+                    'fascia': fascia,
+                    'link_zona': link_zona,
+                    'cod_tip': cod_tip,
                     'zona': riga_zona,
                     'tipologia': tipologia,
                     'stato': stato,
+                    'stato_prev': stato_prev,
                     'compr_min': compr_min,
                     'compr_max': compr_max,
+                    'sup_nl_c': sup_nl_c,
                     'loc_min': loc_min,
                     'loc_max': loc_max,
+                    'sup_nl_l': sup_nl_l,
                     'c_min_num': c_min_val if c_min_val is not None else -1.0,
                     'c_max_num': c_max_val if c_max_val is not None else -1.0,
                     'l_min_num': l_min_val if l_min_val is not None else -1.0,
@@ -451,23 +479,23 @@ def mostra_dettagli_valori(file_valori, info_comune, codice_comune, zona_scelta)
     if chiave_sort:
         righe_estratte.sort(key=lambda x: x[chiave_sort], reverse=reverse_ord)
 
-    print(f"\n{CYAN}┌──────┬────────────────────────────────────────┬──────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┐{RESET}")
-    print(f"{CYAN}│{RESET} {BOLD}VALORI DI MERCATO IMMOBILIARI{RESET}  │  Comune: {YELLOW}{info_comune['nome']} ({codice_comune}){RESET}  │  Zona: {YELLOW}{etichetta_header:<52}{RESET} {CYAN}│{RESET}")
-    print(f"{CYAN}├──────┼────────────────────────────────────────┼──────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤{RESET}")
+    print(f"\n{CYAN}┌──────────────┬──────────┬──────┬──────┬──────────┬────────┬─────────────┬─────────────┬──────────────┬─────────────┬────────────────────────────────────────┬──────────┬────────────┬────────────┬─────────────┬────────────┬────────────┬─────────────┐{RESET}")
+    print(f"{CYAN}│{RESET} {BOLD}DETTAGLIO COMPLETO VALORI DI MERCATO{RESET}  │  Comune: {YELLOW}{info_comune['nome']} ({codice_comune}){RESET}  │  Zona: {YELLOW}{etichetta_header:<110}{RESET} {CYAN}│{RESET}")
+    print(f"{CYAN}├──────────────┼──────────┼──────┼──────┼──────────┼────────┬─────────────┬─────────────┬──────────────┬─────────────┬────────────────────────────────────────┬──────────┬────────────┬────────────┬─────────────┬────────────┬────────────┬─────────────┤{RESET}")
     
-    header = f"{CYAN}│{RESET} {BOLD}{'Zona':<4}{RESET} {CYAN}│{RESET} {BOLD}{'Tipologia':<38}{RESET} {CYAN}│{RESET} {BOLD}{'Stato':<12}{RESET} {CYAN}│{RESET} {BOLD}{'Compr. Min (€/m²)':<17}{RESET} {CYAN}│{RESET} {BOLD}{'Compr. Max (€/m²)':<17}{RESET} {CYAN}│{RESET} {BOLD}{'Loc. Min (€/m²/m)':<17}{RESET} {CYAN}│{RESET} {BOLD}{'Loc. Max (€/m²/m)':<17}{RESET} {CYAN}│{RESET}"
+    header = f"{CYAN}│{RESET} {BOLD}{'Area Terr.':<12}{RESET} {CYAN}│{RESET} {BOLD}{'Regione':<8}{RESET} {CYAN}│{RESET} {BOLD}{'Prov':<4}{RESET} {CYAN}│{RESET} {BOLD}{'Sez':<4}{RESET} {CYAN}│{RESET} {BOLD}{'LinkZona':<8}{RESET} {CYAN}│{RESET} {BOLD}{'Fascia':<6}{RESET} {CYAN}│{RESET} {BOLD}{'Cod.Tip':<11}{RESET} {CYAN}│{RESET} {BOLD}{'Sup.NL C.':<11}{RESET} {CYAN}│{RESET} {BOLD}{'Sup.NL L.':<12}{RESET} {CYAN}│{RESET} {BOLD}{'Zona':<11}{RESET} {CYAN}│{RESET} {BOLD}{'Tipologia':<38}{RESET} {CYAN}│{RESET} {BOLD}{'Stato':<8}{RESET} {CYAN}│{RESET} {BOLD}{'C.Min':<10}{RESET} {CYAN}│{RESET} {BOLD}{'C.Max':<10}{RESET} {CYAN}│{RESET} {BOLD}{'Stato Prev':<11}{RESET} {CYAN}│{RESET} {BOLD}{'L.Min':<10}{RESET} {CYAN}│{RESET} {BOLD}{'L.Max':<10}{RESET} {CYAN}│{RESET}"
     print(header)
-    print(f"{CYAN}├──────┼────────────────────────────────────────┼──────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤{RESET}")
+    print(f"{CYAN}├──────────────┼──────────┼──────┼──────┼──────────┼────────┬─────────────┬─────────────┬──────────────┬─────────────┬────────────────────────────────────────┬──────────┬────────────┬────────────┬─────────────┬────────────┬────────────┬─────────────┤{RESET}")
 
     if not righe_estratte:
-        print(f"{CYAN}│{RESET} {RED}{'Nessun valore trovato per la ricerca effettuata.':<138}{RESET}{CYAN}│{RESET}")
-        print(f"{CYAN}└──────┴────────────────────────────────────────┴──────────────┴───────────────────┴───────────────────┴───────────────────┴───────────────────┘{RESET}\n")
+        print(f"{CYAN}│{RESET} {RED}{'Nessun valore trovato per la ricerca effettuata.':<235}{RESET}{CYAN}│{RESET}")
+        print(f"{CYAN}└──────────────┴──────────┴──────┴──────┴──────────┴────────┴─────────────┴─────────────┴──────────────┴─────────────┴────────────────────────────────────────┴──────────┴────────────┴────────────┴─────────────┴────────────┴────────────┴─────────────┘{RESET}\n")
     else:
         for i, r in enumerate(righe_estratte):
             colore_testo = GREEN if i % 2 == 0 else WHITE
-            print(f"{CYAN}│{RESET} {YELLOW}{r['zona']:<4}{RESET} {CYAN}│{RESET} {colore_testo}{r['tipologia']:<38}{RESET} {CYAN}│{RESET} {r['stato']:<12} {CYAN}│{RESET} {r['compr_min']:<17} {CYAN}│{RESET} {r['compr_max']:<17} {CYAN}│{RESET} {r['loc_min']:<17} {CYAN}│{RESET} {r['loc_max']:<17} {CYAN}│{RESET}")
+            print(f"{CYAN}│{RESET} {r['area']:<12} {CYAN}│{RESET} {r['regione']:<8} {CYAN}│{RESET} {r['prov']:<4} {CYAN}│{RESET} {r['sez']:<4} {CYAN}│{RESET} {r['link_zona']:<8} {CYAN}│{RESET} {r['fascia']:<6} {CYAN}│{RESET} {r['cod_tip']:<11} {CYAN}│{RESET} {r['sup_nl_c']:<11} {CYAN}│{RESET} {r['sup_nl_l']:<12} {CYAN}│{RESET} {YELLOW}{r['zona']:<11}{RESET} {CYAN}│{RESET} {colore_testo}{r['tipologia']:<38}{RESET} {CYAN}│{RESET} {r['stato']:<8} {CYAN}│{RESET} {r['compr_min']:<10} {CYAN}│{RESET} {r['compr_max']:<10} {CYAN}│{RESET} {r['stato_prev']:<11} {CYAN}│{RESET} {r['loc_min']:<10} {CYAN}│{RESET} {r['loc_max']:<10} {CYAN}│{RESET}")
 
-        print(f"{CYAN}└──────┴────────────────────────────────────────┴──────────────┴───────────────────┴───────────────────┴───────────────────┴───────────────────┘{RESET}")
+        print(f"{CYAN}└──────────────┴──────────┴──────┴──────┴──────────┴────────┴─────────────┴─────────────┴──────────────┴─────────────┴────────────────────────────────────────┴──────────┴────────────┴────────────┴─────────────┴────────────┴────────────┴─────────────┘{RESET}")
         
         c_min_med = sum(c_min_list) / len(c_min_list) if c_min_list else 0
         c_max_med = sum(c_max_list) / len(c_max_list) if c_max_list else 0
@@ -499,7 +527,6 @@ def mostra_dettagli_valori(file_valori, info_comune, codice_comune, zona_scelta)
             salva_su_txt(info_comune['nome'], codice_comune, etichetta_salvataggio, righe_estratte, medie_dict)
 
 def chiedi_navigazione():
-    """Chiede all'utente se vuole tornare al menu principale o uscire dal programma."""
     scelta = input(f"{BOLD}Vuoi tornare al Menu Principale o Uscire? ({YELLOW}M{RESET}{BOLD} = Menu, {YELLOW}E{RESET}{BOLD} = Exit): {RESET}").strip().lower()
     if scelta == 'e':
         print(f"\n{GREEN}Applicazione terminata.{RESET}")
@@ -531,7 +558,6 @@ def main():
             print(f"\n{RED}[ERRORE] Impossibile trovare il file '{FILE_ZONE}'.{RESET}")
             break
 
-        # Menu Principale all'avvio a 6 Opzioni
         print(f"\n{BOLD}MENU PRINCIPALE:{RESET}")
         print("1) Ordina comuni per prezzo Compravendita MINIMO")
         print("2) Ordina comuni per prezzo Compravendita MASSIMO")
