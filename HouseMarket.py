@@ -3,8 +3,9 @@ import os
 import sys
 import multiprocessing
 import webbrowser
+
 # --- DISABILITA CACHE CHROMIUM / QTWEBENGINE PER EVITARE L'ERRORE ACCESS DENIED ---
-os.environ["QTWEBENGINE_DISABLE_GPU"] = "1"  # OSTACOLA L'USO DI GPUCACHE BLOCCATA
+os.environ["QTWEBENGINE_DISABLE_GPU"] = "1"
 sys.argv.extend([
     '--disable-gpu-shader-disk-cache',
     '--disable-gpu-program-cache',
@@ -262,6 +263,7 @@ def carica_dati_zone(file_zone):
     return comuni
 
 def calcola_medie_comuni(file_valori, dati_comuni):
+    """Calcola la media dei valori di compravendita e affitto includendo Regione, Area Territoriale e Provincia."""
     medie_comuni = {}
     
     with open(file_valori, mode='r', encoding='utf-8-sig') as f:
@@ -277,10 +279,20 @@ def calcola_medie_comuni(file_valori, dati_comuni):
             l_min = pulisci_numero(row_clean.get('Loc_min', ''))
             l_max = pulisci_numero(row_clean.get('Loc_max', ''))
             
+            area = row_clean.get('Area_territoriale', 'N/D')
+            regione = row_clean.get('Regione', 'N/D')
+            prov = row_clean.get('Prov', 'N/D')
+            
             if istat:
                 if istat not in medie_comuni:
                     nome = dati_comuni.get(istat, {}).get('nome', 'N/D')
-                    medie_comuni[istat] = {'nome': nome, 'c_min': [], 'c_max': [], 'l_min': [], 'l_max': []}
+                    medie_comuni[istat] = {
+                        'nome': nome, 
+                        'area': area,
+                        'regione': regione,
+                        'prov': prov,
+                        'c_min': [], 'c_max': [], 'l_min': [], 'l_max': []
+                    }
                 
                 if c_min is not None: medie_comuni[istat]['c_min'].append(c_min)
                 if c_max is not None: medie_comuni[istat]['c_max'].append(c_max)
@@ -300,6 +312,9 @@ def calcola_medie_comuni(file_valori, dati_comuni):
         risultati.append({
             'istat': istat,
             'nome': data['nome'],
+            'area': data['area'],
+            'regione': data['regione'],
+            'prov': data['prov'],
             'avg_c_min': avg_c_min,
             'avg_c_max': avg_c_max,
             'avg_c_medio': avg_c_medio,
@@ -312,12 +327,12 @@ def calcola_medie_comuni(file_valori, dati_comuni):
 def salva_classifica_su_txt(lista_comuni, campo_sort):
     nome_file = f"Classifica_Comuni_{campo_sort}.txt"
     with open(nome_file, mode='w', encoding='utf-8') as f:
-        f.write("┌──────────┬────────────────────────────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┐\n")
-        f.write("│ Cod. ISTAT │ Comune                                 │ C.Min (€/m²)   │ C.Max (€/m²)   │ C.Medio (€/m²) │ L.Min (€/m²/m) │ L.Max (€/m²/m) │ L.Medio (€/m²/m)│\n")
-        f.write("├──────────┼────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┤\n")
+        f.write("┌──────────┬──────────────┬──────────────┬──────┬────────────────────────────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┐\n")
+        f.write("│ Cod. ISTAT │ Area Terr.   │ Regione      │ Prov │ Comune                                 │ C.Min (€/m²)   │ C.Max (€/m²)   │ C.Medio (€/m²) │ L.Min (€/m²/m) │ L.Max (€/m²/m) │ L.Medio (€/m²/m)│\n")
+        f.write("├──────────┼──────────────┼──────────────┼──────┼────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┤\n")
         for c in lista_comuni:
-            f.write(f"│ {c['istat']:<8} │ {c['nome']:<38} │ {c['avg_c_min']:<14.2f} │ {c['avg_c_max']:<14.2f} │ {c['avg_c_medio']:<14.2f} │ {c['avg_l_min']:<14.2f} │ {c['avg_l_max']:<14.2f} │ {c['avg_l_medio']:<16.2f} │\n")
-        f.write("└──────────┴────────────────────────────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┘\n")
+            f.write(f"│ {c['istat']:<8} │ {c['area']:<12} │ {c['regione']:<12} │ {c['prov']:<4} │ {c['nome']:<38} │ {c['avg_c_min']:<14.2f} │ {c['avg_c_max']:<14.2f} │ {c['avg_c_medio']:<14.2f} │ {c['avg_l_min']:<14.2f} │ {c['avg_l_max']:<14.2f} │ {c['avg_l_medio']:<16.2f} │\n")
+        f.write("└──────────┴──────────────┴──────────────┴──────┴────────────────────────────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┘\n")
         f.write(f"Totale comuni: {len(lista_comuni)}\n")
     print(f"{GREEN}[✓] Classifica salvata con successo nel file: {BOLD}{nome_file}{RESET}\n")
 
@@ -330,15 +345,15 @@ def mostra_classifica_comuni(file_valori, dati_comuni, campo_sort):
     
     lista_comuni.sort(key=lambda x: x[campo_sort], reverse=reverse_ord)
     
-    print(f"\n{CYAN}┌──────────┬────────────────────────────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┐{RESET}")
-    print(f"{CYAN}│{RESET} {BOLD}{'Cod. ISTAT':<8}{RESET} {CYAN}│{RESET} {BOLD}{'Comune':<38}{RESET} {CYAN}│{RESET} {BOLD}{'C.Min (€/m²)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'C.Max (€/m²)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'C.Medio (€/m²)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'L.Min (€/m²/m)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'L.Max (€/m²/m)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'L.Medio (€/m²/m)':<16}{RESET} {CYAN}│{RESET}")
-    print(f"{CYAN}├──────────┼────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┤{RESET}")
+    print(f"\n{CYAN}┌──────────┬──────────────┬──────────────┬──────┬────────────────────────────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┬────────────────┐{RESET}")
+    print(f"{CYAN}│{RESET} {BOLD}{'Cod. ISTAT':<8}{RESET} {CYAN}│{RESET} {BOLD}{'Area Terr.':<12}{RESET} {CYAN}│{RESET} {BOLD}{'Regione':<12}{RESET} {CYAN}│{RESET} {BOLD}{'Prov':<4}{RESET} {CYAN}│{RESET} {BOLD}{'Comune':<38}{RESET} {CYAN}│{RESET} {BOLD}{'C.Min (€/m²)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'C.Max (€/m²)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'C.Medio (€/m²)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'L.Min (€/m²/m)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'L.Max (€/m²/m)':<14}{RESET} {CYAN}│{RESET} {BOLD}{'L.Medio (€/m²/m)':<16}{RESET} {CYAN}│{RESET}")
+    print(f"{CYAN}├──────────┼──────────────┼──────────────┼──────┼────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┼────────────────┤{RESET}")
     
     for i, c in enumerate(lista_comuni):
         colore = GREEN if i % 2 == 0 else WHITE
-        print(f"{CYAN}│{RESET} {YELLOW}{c['istat']:<8}{RESET} {CYAN}│{RESET} {colore}{c['nome']:<38}{RESET} {CYAN}│{RESET} {c['avg_c_min']:<14.2f} {CYAN}│{RESET} {c['avg_c_max']:<14.2f} {CYAN}│{RESET} {c['avg_c_medio']:<14.2f} {CYAN}│{RESET} {c['avg_l_min']:<14.2f} {CYAN}│{RESET} {c['avg_l_max']:<14.2f} {CYAN}│{RESET} {c['avg_l_medio']:<16.2f} {CYAN}│{RESET}")
+        print(f"{CYAN}│{RESET} {YELLOW}{c['istat']:<8}{RESET} {CYAN}│{RESET} {c['area']:<12} {CYAN}│{RESET} {c['regione']:<12} {CYAN}│{RESET} {c['prov']:<4} {CYAN}│{RESET} {colore}{c['nome']:<38}{RESET} {CYAN}│{RESET} {c['avg_c_min']:<14.2f} {CYAN}│{RESET} {c['avg_c_max']:<14.2f} {CYAN}│{RESET} {c['avg_c_medio']:<14.2f} {CYAN}│{RESET} {c['avg_l_min']:<14.2f} {CYAN}│{RESET} {c['avg_l_max']:<14.2f} {CYAN}│{RESET} {c['avg_l_medio']:<16.2f} {CYAN}│{RESET}")
         
-    print(f"{CYAN}└──────────┴────────────────────────────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┘{RESET}")
+    print(f"{CYAN}└──────────┴──────────────┴──────────────┴──────┴────────────────────────────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┴────────────────┘{RESET}")
     print(f"{MAGENTA}Totale comuni visibili: {len(lista_comuni)}{RESET}\n")
 
     salva = input(f"{BOLD}Vuoi salvare questa classifica su file .txt? (s/n): {RESET}").strip().lower()
